@@ -1,6 +1,5 @@
 /*
-Copyright © 2026 NAME HERE <EMAIL ADDRESS>
-
+Copyright © 2026 Harry Sharma harrysharma1066@gmail.com
 */
 package cmd
 
@@ -10,16 +9,16 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var (
+	serverPort string // port number for server (defaults to 6969)
+	serverHost string // hostname for server (defaults to 127.0.0.1)
+)
+
 // serveCmd represents the serve command
 var serveCmd = &cobra.Command{
 	Use:   "serve",
-	Short: "A brief description of your command",
-	Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
-
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
+	Short: "Serving the websocket server",
+	Long:  `Serving the websocket server for clients to connect to.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("serve called")
 	},
@@ -37,4 +36,6 @@ func init() {
 	// Cobra supports local flags which will only run when this command
 	// is called directly, e.g.:
 	// serveCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	serveCmd.Flags().StringVarP(&serverPort, "port", "p", "", "port to host websocket server on")
+	serveCmd.Flags().StringVarP(&serverHost, "hostname", "n", "", "hostname to host websocket server on")
 }
