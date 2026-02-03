@@ -26,8 +26,8 @@ func (h *Hub) Run() {
 			message := Message{
 				Type:     "welcome",
 				Value:    "joined chat",
-				Username: client.username,
-				UserId:   client.userId,
+				Username: client.Username,
+				UserId:   client.UserId,
 			}
 
 			for client := range h.clients {

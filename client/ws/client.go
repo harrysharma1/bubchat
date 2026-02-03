@@ -18,10 +18,10 @@ const (
 )
 
 type Client struct {
-	conn     *websocket.Conn
-	username string
-	userId   string
-	program  *tea.Program
+	Conn     *websocket.Conn
+	Username string
+	UserId   string
+	Program  *tea.Program
 }
 
 func NewClient(url, username string, p *tea.Program) (*Client, error) {
@@ -31,28 +31,28 @@ func NewClient(url, username string, p *tea.Program) (*Client, error) {
 	}
 
 	return &Client{
-		conn:     conn,
-		username: username,
-		program:  p,
+		Conn:     conn,
+		Username: username,
+		Program:  p,
 	}, nil
 }
 
 func (c *Client) ReadPump() {
-	defer c.conn.Close()
+	defer c.Conn.Close()
 
-	c.conn.SetReadDeadline(time.Now().Add(wait))
-	c.conn.SetPingHandler(func(appData string) error { c.conn.SetReadDeadline(time.Now().Add(wait)); return nil })
+	c.Conn.SetReadDeadline(time.Now().Add(wait))
+	c.Conn.SetPingHandler(func(appData string) error { c.Conn.SetReadDeadline(time.Now().Add(wait)); return nil })
 
 	for {
 		var message server.Message
 
-		err := c.conn.ReadJSON(&message)
+		err := c.Conn.ReadJSON(&message)
 		if err != nil {
 			return
 		}
 
 		if message.Type == "welcome" {
-			c.userId = message.UserId
+			c.UserId = message.UserId
 			continue
 		}
 

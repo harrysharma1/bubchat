@@ -38,8 +38,8 @@ type Client struct {
 	hub      *Hub
 	conn     *websocket.Conn
 	send     chan Message
-	username string
-	userId   string
+	Username string
+	UserId   string
 }
 
 func (c *Client) WritePump() {
@@ -81,8 +81,8 @@ func (c *Client) ReadPump() {
 		c.hub.broadcast <- Message{
 			Type:       "exit",
 			Value:      "left chat",
-			UserId:     c.userId,
-			Username:   c.username,
+			UserId:     c.UserId,
+			Username:   c.Username,
 			UploadTime: time.Now(),
 		}
 		c.hub.unregister <- c
@@ -101,8 +101,8 @@ func (c *Client) ReadPump() {
 			return
 		}
 
-		message.UserId = c.userId
-		message.Username = c.username
+		message.UserId = c.UserId
+		message.Username = c.Username
 		message.UploadTime = time.Now()
 		c.hub.broadcast <- message
 	}
@@ -124,8 +124,8 @@ func ServeWS(hub *Hub, w http.ResponseWriter, r *http.Request) {
 		hub:      hub,
 		conn:     conn,
 		send:     make(chan Message, bufferSize/2),
-		username: username,
-		userId:   uuid.NewString(),
+		Username: username,
+		UserId:   uuid.NewString(),
 	}
 	client.hub.register <- client
 
