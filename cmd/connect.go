@@ -20,8 +20,13 @@ var connectCmd = &cobra.Command{
 	Use:   "connect",
 	Short: "Connect to the websocket server",
 	Long:  `Connect to the websocket server as a user client`,
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
+		if versionCheck {
+			fmt.Printf("%s (%s)", VERSION_NAME, VERSION_NUMBER)
+			return nil
+		}
 		fmt.Println("connect called")
+		return nil
 	},
 }
 

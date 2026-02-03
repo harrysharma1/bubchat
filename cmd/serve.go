@@ -19,8 +19,13 @@ var serveCmd = &cobra.Command{
 	Use:   "serve",
 	Short: "Serving the websocket server",
 	Long:  `Serving the websocket server for clients to connect to.`,
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
+		if versionCheck {
+			fmt.Printf("%s (%s)", VERSION_NAME, VERSION_NUMBER)
+			return nil
+		}
 		fmt.Println("serve called")
+		return nil
 	},
 }
 
