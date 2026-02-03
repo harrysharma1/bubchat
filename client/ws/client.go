@@ -53,9 +53,10 @@ func (c *Client) ReadPump() {
 
 		if message.Type == "welcome" {
 			c.UserId = message.UserId
+			c.Program.Send(message)
 			continue
 		}
-
+		c.Program.Send(message)
 	}
 }
 

@@ -4,8 +4,16 @@ Copyright © 2026 Harry Sharma harrysharma1066@gmail.com
 package cmd
 
 import (
+	"bubchat/server"
+	"context"
 	"fmt"
+	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
 
+	"github.com/charmbracelet/log"
 	"github.com/spf13/cobra"
 )
 
@@ -24,7 +32,44 @@ var serveCmd = &cobra.Command{
 			fmt.Printf("%s (%s)", VERSION_NAME, VERSION_NUMBER)
 			return nil
 		}
-		fmt.Println("serve called")
+		if serverHost == "" {
+			serverHost = "127.0.0.1"
+		}
+
+		if serverPort == "" {
+			serverPort = "6969"
+		}
+		url := fmt.Sprintf("%s:%s", serverHost, serverPort)
+
+		hub := server.NewHub()
+		go hub.Run()
+
+		mux := http.NewServeMux()
+		mux.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
+			server.ServeWS(hub, w, r)
+		})
+
+		server := &http.Server{
+			Addr:    url,
+			Handler: mux,
+		}
+
+		stop := make(chan os.Signal, 1)
+		signal.Notify(stop, os.Interrupt, syscall.SIGINT)
+		go func() {
+			log.Infof("Websocket server launched on ws::/%s/ws", url)
+			if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+				log.Fatal(err)
+			}
+		}()
+		<-stop
+		log.Info("Shutting down server gracefully...")
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		if err := server.Shutdown(ctx); err != nil {
+			log.Error("Server shutdown failed:", err)
+		}
+		log.Info("Server exited cleanly 👋")
 		return nil
 	},
 }

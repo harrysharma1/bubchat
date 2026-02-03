@@ -111,7 +111,7 @@ func (c *Client) ReadPump() {
 func ServeWS(hub *Hub, w http.ResponseWriter, r *http.Request) {
 	username := r.URL.Query().Get("username")
 	if username == "" {
-		username = "anonymous"
+		username = "dokja"
 	}
 
 	conn, err := upgrader.Upgrade(w, r, nil)

@@ -4,8 +4,11 @@ Copyright © 2026 Harry Sharma harrysharma1066@gmail.com
 package cmd
 
 import (
+	"bubchat/client/tui"
+	"bubchat/client/ws"
 	"fmt"
 
+	tea "github.com/charmbracelet/bubbletea"
 	"github.com/spf13/cobra"
 )
 
@@ -25,8 +28,33 @@ var connectCmd = &cobra.Command{
 			fmt.Printf("%s (%s)", VERSION_NAME, VERSION_NUMBER)
 			return nil
 		}
-		fmt.Println("connect called")
-		return nil
+
+		if clientHost == "" {
+			clientHost = "127.0.0.1"
+		}
+
+		if clientPort == "" {
+			clientPort = "6969"
+		}
+
+		if clientName == "" {
+			clientName = "dokja"
+		}
+
+		url := fmt.Sprintf("ws://%s:%s/ws?username=%s", clientHost, clientPort, clientName)
+		cm := tui.InitialChatModel()
+		tProgram := tea.NewProgram(cm, tea.WithAltScreen())
+
+		client, err := ws.NewClient(url, clientName, tProgram)
+		if err != nil {
+			return err
+		}
+
+		cm.Client = client
+		go client.ReadPump()
+
+		_, err = tProgram.Run()
+		return err
 	},
 }
 

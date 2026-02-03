@@ -18,9 +18,8 @@ import (
 const gap = "\n\n"
 
 type (
-	ErrorMsg           error
-	IncomingMessageMsg server.Message
-	SocketErrorMsg     error
+	ErrorMsg       error
+	SocketErrorMsg error
 )
 
 type ChatModel struct {
@@ -77,7 +76,7 @@ func (cm *ChatModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	switch msg := msg.(type) {
 
-	case IncomingMessageMsg:
+	case server.Message:
 		incomingMessage := server.Message(msg)
 		userStyle = userStyle.Foreground(lipgloss.Color(helper.HexFromUUID(helper.FirstN(msg.UserId, 6))))
 
@@ -147,9 +146,6 @@ func (cm *ChatModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		}
 	case ErrorMsg:
-		cm.err = msg
-		return cm, nil
-	case SocketErrorMsg:
 		cm.err = msg
 		return cm, nil
 	}
