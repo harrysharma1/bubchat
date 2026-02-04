@@ -1,12 +1,14 @@
 package server
 
+// Hub for managing clients.
 type Hub struct {
-	clients    map[*Client]bool
-	broadcast  chan Message
-	register   chan *Client
-	unregister chan *Client
+	clients    map[*Client]bool // Goroutine channel for keeping track of connected clients.
+	broadcast  chan Message     // Goroutine channel for broadcasting message to all other clients.
+	register   chan *Client     // Goroutine channel for registering client to hub.
+	unregister chan *Client     // Gorouting channel for unregistering client from hub.
 }
 
+// Initialising a new hub.
 func NewHub() *Hub {
 	return &Hub{
 		broadcast:  make(chan Message),
@@ -16,6 +18,15 @@ func NewHub() *Hub {
 	}
 }
 
+/*
+Programm loop for hub. Either you:
+
+- register client (and send welcome message to all other clients).
+
+- unregister client.
+
+- broadcast messages to all clients.
+*/
 func (h *Hub) Run() {
 	for {
 

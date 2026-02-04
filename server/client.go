@@ -9,6 +9,7 @@ import (
 	"github.com/gorilla/websocket"
 )
 
+// Constants to alter buffer/wait time for server read/write.
 const (
 	bufferSize = 2048
 	wait       = 60 * time.Second
@@ -26,22 +27,25 @@ var upgrader = websocket.Upgrader{
 	},
 } // Upgrading standard HTTP to Websocket
 
+// Message that will be passed to all clients via the Hub pattern.
 type Message struct {
-	Type       string    `json:"type"`
-	Value      string    `json:"value"`
-	UserId     string    `json:"user_id"`
-	Username   string    `json:"username"`
-	UploadTime time.Time `json:"upload_time"`
+	Type       string    `json:"type"`        // Message type to decide how clientside code will handle the message.
+	Value      string    `json:"value"`       // Value of the message e.g. message body.
+	UserId     string    `json:"user_id"`     // UUID that helps id client's
+	Username   string    `json:"username"`    // Username for clientside code.
+	UploadTime time.Time `json:"upload_time"` // Upload time of message.
 }
 
+// Client to be used within the Hub logic of code.
 type Client struct {
-	hub      *Hub
-	conn     *websocket.Conn
-	send     chan Message
-	Username string
-	UserId   string
+	hub      *Hub            // Hub for managing the clients connections.
+	conn     *websocket.Conn // Client's websocket connection.
+	send     chan Message    // Goroutine channel for concurrently sending message
+	Username string          // Client username.
+	UserId   string          // Client userid.
 }
 
+// Writing message to all clients through websocket hub.
 func (c *Client) WritePump() {
 	ticker := time.NewTicker(pingWait)
 	defer func() {
@@ -76,6 +80,7 @@ func (c *Client) WritePump() {
 
 }
 
+// Making sure all othe clients recieve message from current client.
 func (c *Client) ReadPump() {
 	defer func() {
 		c.hub.broadcast <- Message{
