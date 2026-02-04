@@ -18,20 +18,21 @@ import (
 const gap = "\n\n"
 
 type (
-	ErrorMsg       error
-	SocketErrorMsg error
+	ErrorMsg error // Generic error to be passed off and discarded.
 )
 
+// Model for websocket chat TUI.
 type ChatModel struct {
-	viewPort     viewport.Model
-	messages     []string
-	chatTextArea textarea.Model
-	Client       *ws.Client
-	err          error
-	help         help.Model
-	keys         KeyMap
+	viewPort     viewport.Model // Viewport where messages will appear.
+	messages     []string       // Where messages as strings are stored.
+	chatTextArea textarea.Model // Where client can type.
+	Client       *ws.Client     // Client that can connect to websocket server.
+	err          error          // Error for graceful exiting.
+	help         help.Model     // Display help message for specific keys.
+	keys         KeyMap         // Keymap of all accounted for special keys.
 }
 
+// Initialises the start state of ChatModel.
 func InitialChatModel() *ChatModel {
 	cTextArea := textarea.New()
 	cTextArea.Placeholder = "Send a message..."
@@ -61,10 +62,28 @@ func InitialChatModel() *ChatModel {
 
 }
 
+/*
+Part of the required function, Init(), to implement on the tea interface.
+
+This just implementation tells the cursor in the text area to blink.
+*/
 func (cm *ChatModel) Init() tea.Cmd {
 	return textarea.Blink
 }
 
+/*
+Part of the required function, Update(), to implement on the tea interface.
+
+This takes any incoming tea.Msg, not to be confused with websocket message, and either:
+
+- displays message from server
+
+- resizes viewport
+
+- checks to see if current client has hit ctrl+c (to exit) or enter (to send message)
+
+- reject any errors for now
+*/
 func (cm *ChatModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var (
 		tAreaCmd tea.Cmd
@@ -83,10 +102,10 @@ func (cm *ChatModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		var line string
 		time := timeStyle.Render(fmt.Sprintf("[%s]", incomingMessage.UploadTime.Format("15:04:05")))
 		user := userStyle.Render(fmt.Sprintf("%s (%s)", incomingMessage.Username, helper.FirstN(incomingMessage.UserId, 6)))
-		system := systemStyle.Render(incomingMessage.Value)
 
 		switch incomingMessage.Type {
 		case "welcome", "exit":
+			system := systemStyle.Render(incomingMessage.Value)
 			line = fmt.Sprintf(
 				"%s %s %s",
 				time,
@@ -94,11 +113,12 @@ func (cm *ChatModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				system,
 			)
 		default:
+			baseMessage := messageStyle.Render(incomingMessage.Value)
 			line = fmt.Sprintf(
 				"%s %s: %s",
 				time,
 				user,
-				system,
+				baseMessage,
 			)
 		}
 		cm.messages = append(cm.messages, line)
@@ -152,6 +172,11 @@ func (cm *ChatModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return cm, tea.Batch(tAreaCmd, vPortCmd)
 }
 
+/*
+Part of the required function, View(), to implement on the tea interface.
+
+This implements the view which will showcase the current model state onto the TUI.
+*/
 func (cm *ChatModel) View() string {
 	user := userStyle.Render(fmt.Sprintf("%s (%s)", cm.Client.Username, helper.FirstN(cm.Client.UserId, 6)))
 	return fmt.Sprintf(

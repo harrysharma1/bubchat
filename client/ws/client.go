@@ -8,22 +8,24 @@ import (
 	"github.com/gorilla/websocket"
 )
 
+// Constants to alter buffer/wait time for client read.
 const (
 	bufferSize = 2048
 	wait       = 60 * time.Second
 
-	pongWait  = wait
-	pingWait  = (wait * 9) / 10
-	writeWait = wait - (50 * time.Second)
+	pongWait = wait
+	pingWait = (wait * 9) / 10
 )
 
+// User facing client.
 type Client struct {
-	Conn     *websocket.Conn
-	Username string
-	UserId   string
-	Program  *tea.Program
+	Conn     *websocket.Conn // Websocket connection for client to access websocket server.
+	Username string          // Client's username for tui use case.
+	UserId   string          // Client's userid for websocket connection.
+	Program  *tea.Program    // Program allows the to initialise the tea program state.
 }
 
+// Create a new client with a websocket connection.
 func NewClient(url, username string, p *tea.Program) (*Client, error) {
 	conn, _, err := websocket.DefaultDialer.Dial(url, nil)
 	if err != nil {
@@ -37,6 +39,7 @@ func NewClient(url, username string, p *tea.Program) (*Client, error) {
 	}, nil
 }
 
+// Reading message from websocket server to be sent to TUI processing.
 func (c *Client) ReadPump() {
 	defer c.Conn.Close()
 
