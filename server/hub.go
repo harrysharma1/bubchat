@@ -1,5 +1,7 @@
 package server
 
+import "context"
+
 // Hub for managing clients.
 type Hub struct {
 	clients    map[*Client]bool // Goroutine channel for keeping track of connected clients.
@@ -27,10 +29,12 @@ Programm loop for hub. Either you:
 
 - broadcast messages to all clients.
 */
-func (h *Hub) Run() {
+func (h *Hub) Run(ctx context.Context) {
 	for {
 
 		select {
+		case <-ctx.Done():
+			return
 		case client := <-h.register:
 			h.clients[client] = true
 
