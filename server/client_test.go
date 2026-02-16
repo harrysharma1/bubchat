@@ -2,37 +2,94 @@ package server
 
 import (
 	"context"
-	"net/http"
-	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/gorilla/websocket"
 	"github.com/stretchr/testify/assert"
 )
 
-func TestServeWS_RegisterClient(t *testing.T) {
+func TestServeWSRegisterClient(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	hub := NewHub()
 	go hub.Run(ctx)
 
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ServeWS(hub, w, r)
-	}))
+	server := startTestServer(hub)
 	defer server.Close()
 
 	wsURL := "ws" + strings.TrimPrefix(server.URL, "http") + "/ws?username=testuser"
 
-	conn, _, err := websocket.DefaultDialer.Dial(wsURL, nil)
+	ws, _, err := websocket.DefaultDialer.Dial(wsURL, nil)
 	assert.NoError(t, err)
-	defer conn.Close()
+	defer ws.Close()
 
 	var msg Message
-	err = conn.ReadJSON(&msg)
+	err = ws.ReadJSON(&msg)
 
 	assert.NoError(t, err)
 	assert.Equal(t, "welcome", msg.Type)
 	assert.Equal(t, "joined chat", msg.Value)
 	assert.Equal(t, "testuser", msg.Username)
+}
+
+func TestWritePumpSendMessage(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	hub := NewHub()
+	go hub.Run(ctx)
+
+	server := startTestServer(hub)
+	defer server.Close()
+
+	wsURL := "ws" + strings.TrimPrefix(server.URL, "http") + "/ws?username=testuser"
+
+	ws, _, err := websocket.DefaultDialer.Dial(wsURL, nil)
+	assert.NoError(t, err)
+	defer ws.Close()
+
+	ws.SetReadDeadline(time.Now().Add(2 * time.Second))
+
+	var welcome Message
+	err = ws.ReadJSON(&welcome)
+	assert.NoError(t, err)
+	assert.Equal(t, "welcome", welcome.Type)
+
+	err = ws.WriteJSON(Message{
+		Type:  "chat",
+		Value: "Hello, World!",
+	})
+	assert.NoError(t, err)
+
+	var received Message
+	err = ws.ReadJSON(&received)
+	assert.NoError(t, err)
+
+	assert.Equal(t, "chat", received.Type)
+	assert.Equal(t, "Hello, World!", received.Value)
+	assert.Equal(t, "testuser", received.Username)
+}
+
+func TestWritePumpTextMessageWebsocketType(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	hub := NewHub()
+	go hub.Run(ctx)
+
+	server := startTestServer(hub)
+	defer server.Close()
+
+	wsURL := "ws" + strings.TrimPrefix(server.URL, "http") + "/ws?username=testuser"
+
+	ws, _, err := websocket.DefaultDialer.Dial(wsURL, nil)
+	assert.NoError(t, err)
+	defer ws.Close()
+
+	ws.SetReadDeadline(time.Now().Add(pingWait + time.Second))
+	msgType, _, err := ws.ReadMessage()
+	assert.NoError(t, err)
+	assert.Equal(t, websocket.TextMessage, msgType)
 }
